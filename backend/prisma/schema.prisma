@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("technician") // admin | pharmacist | technician
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  staff Staff?
+  sales Sale[]
+}
+
+model Product {
+  id                   String   @id @default(cuid())
+  name                 String
+  form                 String?
+  category             String
+  ndc                  String?
+  batchNo              String?
+  expiryDate           DateTime
+  quantity             Int      @default(0)
+  minLevel             Int      @default(10)
+  price                Float    @default(0)
+  requiresPrescription Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  supplierId String?
+  supplier   Supplier?  @relation(fields: [supplierId], references: [id])
+  saleItems  SaleItem[]
+}
+
+model Sale {
+  id            String   @id @default(cuid())
+  txnNumber     String   @unique
+  customerName  String   @default("Walk-in Customer")
+  subtotal      Float
+  tax           Float    @default(0)
+  discount      Float    @default(0)
+  total         Float
+  paymentMethod String   @default("cash")
+  status        String   @default("Completed")
+  createdAt     DateTime @default(now())
+
+  prescriptionId String?
+  prescription   Prescription? @relation(fields: [prescriptionId], references: [id])
+
+  cashierId String?
+  cashier   User?      @relation(fields: [cashierId], references: [id])
+  items     SaleItem[]
+}
+
+model SaleItem {
+  id        String  @id @default(cuid())
+  quantity  Int
+  price     Float
+  name      String
+
+  saleId    String
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model Supplier {
+  id             String   @id @default(cuid())
+  vendorId       String   @unique
+  name           String
+  categories     String[]
+  status         String   @default("Active")
+  leadTimeDays   Int      @default(3)
+  rating         Float    @default(4.5)
+  contactName    String?
+  contactEmail   String?
+  contactPhone   String?
+  phoneExt       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  products       Product[]
+  purchaseOrders PurchaseOrder[]
+}
+
+model PurchaseOrder {
+  id         String   @id @default(cuid())
+  poNumber   String   @unique
+  date       DateTime @default(now())
+  status     String   @default("Pending")
+  amount     Float
+  items      Json?
+  createdAt  DateTime @default(now())
+
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+}
+
+model Staff {
+  id        String   @id @default(cuid())
+  name      String
+  role      String
+  licenseId String?
+  email     String?
+  phone     String?
+  onDuty    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id])
+}
+
+model Prescription {
+  id          String   @id @default(cuid())
+  rxId        String   @unique
+  type        String   @default("digital")
+  patientName String
+  doctorName  String
+  medication  String
+  quantity    Int
+  dateIssued  DateTime
+  status      String   @default("Pending")
+  fileUrl     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sales Sale[]
+}
+
+model Settings {
+  id                String   @id @default(cuid())
+  facilityName      String   @default("City Center Pharmacy")
+  taxId             String   @default("")
+  address           String   @default("")
+  contactNumber     String   @default("")
+  complianceOfficer String   @default("")
+  lowStockAlerts    Boolean  @default(true)
+  automatedBackups  Boolean  @default(true)
+  updatedAt         DateTime @updatedAt
+}

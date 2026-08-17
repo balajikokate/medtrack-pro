@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MedTrack Pro - Prescriptions</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=JetBrains+Mono:wght@500&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-on-surface": "#eff1f3",
+                    "on-primary": "#ffffff",
+                    "on-background": "#191c1e",
+                    "tertiary-container": "#006544",
+                    "on-tertiary": "#ffffff",
+                    "surface-container": "#eceef0",
+                    "error": "#ba1a1a",
+                    "primary-container": "#0f52ba",
+                    "primary-fixed": "#d9e2ff",
+                    "surface-variant": "#e0e3e5",
+                    "tertiary-fixed-dim": "#4edea3",
+                    "surface-container-high": "#e6e8ea",
+                    "on-error-container": "#93000a",
+                    "inverse-surface": "#2d3133",
+                    "outline": "#737784",
+                    "on-secondary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-secondary-fixed": "#0b1c30",
+                    "surface-tint": "#1d59c1",
+                    "secondary": "#505f76",
+                    "on-primary-fixed-variant": "#00419c",
+                    "tertiary-fixed": "#6ffbbe",
+                    "background": "#f7f9fb",
+                    "on-primary-fixed": "#001945",
+                    "on-secondary-container": "#54647a",
+                    "inverse-primary": "#b0c6ff",
+                    "on-tertiary-container": "#58e7ab",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "on-surface-variant": "#434653",
+                    "on-error": "#ffffff",
+                    "tertiary": "#004b31",
+                    "on-tertiary-fixed": "#002113",
+                    "surface-bright": "#f7f9fb",
+                    "on-primary-container": "#bcceff",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "primary": "#003c90",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-container": "#d0e1fb",
+                    "surface-dim": "#d8dadc",
+                    "outline-variant": "#c3c6d5",
+                    "primary-fixed-dim": "#b0c6ff",
+                    "surface-container-highest": "#e0e3e5",
+                    "on-tertiary-fixed-variant": "#005236",
+                    "surface": "#f7f9fb",
+                    "surface-container-low": "#f2f4f6",
+                    "on-surface": "#191c1e",
+                    "secondary-fixed": "#d3e4fe"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "gutter": "16px",
+                    "base": "4px",
+                    "container-margin": "24px",
+                    "lg": "24px",
+                    "md": "16px",
+                    "xs": "4px",
+                    "sm": "8px",
+                    "xl": "32px"
+            },
+            "fontFamily": {
+                    "data-mono": [
+                            "JetBrains Mono"
+                    ],
+                    "body-md": [
+                            "Inter"
+                    ],
+                    "label-caps": [
+                            "Inter"
+                    ],
+                    "headline-sm": [
+                            "Manrope"
+                    ],
+                    "body-lg": [
+                            "Inter"
+                    ],
+                    "display-lg": [
+                            "Manrope"
+                    ],
+                    "body-sm": [
+                            "Inter"
+                    ],
+                    "headline-md": [
+                            "Manrope"
+                    ]
+            },
+            "fontSize": {
+                    "data-mono": [
+                            "13px",
+                            {
+                                    "lineHeight": "16px",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "body-md": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "label-caps": [
+                            "11px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.05em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "headline-sm": [
+                            "20px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "body-lg": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "display-lg": [
+                            "32px",
+                            {
+                                    "lineHeight": "40px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "body-sm": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "fontWeight": "600"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #F8FAFC; /* Neutral Ice */
+            color: #191c1e;
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar for clinical look */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        
+        .shadow-dropdown {
+            box-shadow: 0px 4px 20px rgba(15, 82, 186, 0.08);
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden antialiased text-on-background">
+<!-- SideNavBar -->
+<nav class="hidden md:flex bg-surface-container-low border-r border-outline-variant flex-col w-64 h-screen fixed left-0 top-0 py-lg px-md z-40">
+<div class="mb-xl flex flex-col gap-sm">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center text-on-primary-container shrink-0">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">medical_services</span>
+</div>
+<div>
+<h1 class="font-headline-sm text-headline-sm font-black text-primary">MedTrack Pro</h1>
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase">Clinical Precision</p>
+</div>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary font-body-md text-body-md py-sm px-md rounded flex items-center justify-center gap-sm mb-lg hover:bg-surface-tint transition-colors">
+<span class="material-symbols-outlined">add</span>
+            New Prescription
+        </button>
+<ul class="flex flex-col gap-xs flex-1 overflow-y-auto">
+<li>
+<a class="flex items-center gap-md px-md py-sm cursor-pointer text-on-surface-variant hover:bg-surface-variant transition-all rounded-lg font-label-caps text-label-caps uppercase" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                    Dashboard
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm cursor-pointer text-on-surface-variant hover:bg-surface-variant transition-all rounded-lg font-label-caps text-label-caps uppercase" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+                    Inventory
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm cursor-pointer text-on-surface-variant hover:bg-surface-variant transition-all rounded-lg font-label-caps text-label-caps uppercase" href="#">
+<span class="material-symbols-outlined" data-icon="point_of_sale">point_of_sale</span>
+                    Sales POS
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm cursor-pointer text-on-surface-variant hover:bg-surface-variant transition-all rounded-lg font-label-caps text-label-caps uppercase" href="#">
+<span class="material-symbols-outlined" data-icon="local_shipping">local_shipping</span>
+                    Suppliers
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm cursor-pointer bg-primary-container text-on-primary-container rounded-lg font-label-caps text-label-caps uppercase" href="#">
+<span class="material-symbols-outlined" data-icon="prescriptions" style="font-variation-settings: 'FILL' 1;">prescriptions</span>
+                    Prescriptions
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm cursor-pointer text-on-surface-variant hover:bg-surface-variant transition-all rounded-lg font-label-caps text-label-caps uppercase" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+                    Analytics
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm cursor-pointer text-on-surface-variant hover:bg-surface-variant transition-all rounded-lg font-label-caps text-label-caps uppercase" href="#">
+<span class="material-symbols-outlined" data-icon="badge">badge</span>
+                    Staff
+                </a>
+</li>
+<li class="mt-auto">
+<a class="flex items-center gap-md px-md py-sm cursor-pointer text-on-surface-variant hover:bg-surface-variant transition-all rounded-lg font-label-caps text-label-caps uppercase border-t border-outline-variant pt-md" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                    Settings
+                </a>
+</li>
+</ul>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 md:ml-64 h-screen flex flex-col relative bg-background">
+<!-- TopNavBar (Mobile Only) -->
+<header class="md:hidden flex justify-between items-center w-full px-md h-16 sticky top-0 z-50 bg-surface border-b border-outline-variant">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary">medical_services</span>
+<span class="font-headline-sm text-headline-sm font-bold text-primary">MedTrack Pro</span>
+</div>
+<div class="flex items-center gap-sm text-on-surface-variant">
+<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors">notifications</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors">account_circle</span>
+</div>
+</header>
+<!-- Page Header & Actions -->
+<div class="p-container-margin lg:p-xl shrink-0">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-lg mb-lg">
+<div>
+<h2 class="font-display-lg text-display-lg text-on-background mb-xs">Prescription Management</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Verify and manage active prescriptions.</p>
+</div>
+<div class="flex gap-sm">
+<button class="md:hidden bg-primary text-on-primary font-body-md text-body-md py-sm px-md rounded flex items-center gap-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                        New
+                    </button>
+</div>
+</div>
+<!-- Toolbar: Search & Filters -->
+<div class="bg-surface border border-outline-variant rounded p-sm flex flex-col lg:flex-row gap-md items-center shadow-sm">
+<!-- Search -->
+<div class="relative w-full lg:w-96 flex-1">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full pl-xl pr-sm py-sm bg-surface border border-outline-variant rounded focus:border-primary focus:ring-2 focus:ring-primary-fixed focus:outline-none font-body-md text-body-md text-on-surface placeholder:text-outline transition-all" placeholder="Search by Rx ID, Patient, or Doctor..." type="text"/>
+</div>
+<!-- Filters -->
+<div class="flex gap-sm w-full lg:w-auto overflow-x-auto pb-xs lg:pb-0 hide-scrollbar">
+<button class="shrink-0 bg-secondary-container text-on-secondary-container font-label-caps text-label-caps px-md py-sm rounded-full flex items-center gap-xs uppercase tracking-wider">
+                        All
+                        <span class="font-data-mono text-data-mono bg-on-secondary-container text-secondary-container px-xs rounded-sm ml-xs">24</span>
+</button>
+<button class="shrink-0 bg-surface text-on-surface-variant border border-outline-variant hover:bg-surface-variant transition-colors font-label-caps text-label-caps px-md py-sm rounded-full flex items-center gap-xs uppercase tracking-wider">
+                        Pending Verification
+                        <span class="font-data-mono text-data-mono bg-outline-variant text-on-surface-variant px-xs rounded-sm ml-xs">8</span>
+</button>
+<button class="shrink-0 bg-surface text-on-surface-variant border border-outline-variant hover:bg-surface-variant transition-colors font-label-caps text-label-caps px-md py-sm rounded-full flex items-center gap-xs uppercase tracking-wider">
+                        Verified
+                    </button>
+<button class="shrink-0 bg-surface text-on-surface-variant border border-outline-variant hover:bg-surface-variant transition-colors font-label-caps text-label-caps px-md py-sm rounded-full flex items-center gap-xs uppercase tracking-wider">
+                        Expired
+                    </button>
+</div>
+</div>
+</div>
+<!-- Data Canvas -->
+<div class="flex-1 overflow-auto px-container-margin lg:px-xl pb-xl">
+<!-- Desktop Table View -->
+<div class="hidden lg:block bg-surface border border-outline-variant rounded overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead class="bg-[#F1F5F9] border-b border-outline-variant font-label-caps text-label-caps text-secondary uppercase tracking-wider">
+<tr>
+<th class="px-md py-sm font-medium w-12 text-center">Type</th>
+<th class="px-md py-sm font-medium">Rx ID</th>
+<th class="px-md py-sm font-medium">Patient Name</th>
+<th class="px-md py-sm font-medium">Prescribing Doctor</th>
+<th class="px-md py-sm font-medium">Medication</th>
+<th class="px-md py-sm font-medium text-right">Date Issued</th>
+<th class="px-md py-sm font-medium text-center">Status</th>
+<th class="px-md py-sm font-medium text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface divide-y divide-outline-variant">
+<!-- Row 1: Pending -->
+<tr class="hover:bg-[#F0F7FF] transition-colors group">
+<td class="px-md py-md text-center">
+<span class="material-symbols-outlined text-outline" title="Digital Prescription">phone_iphone</span>
+</td>
+<td class="px-md py-md font-data-mono text-data-mono text-secondary">RX-9082-A</td>
+<td class="px-md py-md font-medium">Eleanor Vance</td>
+<td class="px-md py-md text-on-surface-variant">Dr. Montague</td>
+<td class="px-md py-md">
+<div class="flex flex-col gap-xs">
+<span>Amoxicillin 500mg</span>
+<span class="font-data-mono text-data-mono text-secondary">QTY: 30</span>
+</div>
+</td>
+<td class="px-md py-md font-data-mono text-data-mono text-right text-secondary">2023-10-27</td>
+<td class="px-md py-md text-center">
+<span class="inline-flex items-center gap-xs px-sm py-xs rounded-full bg-[#FFFBEB] text-[#B45309] border border-[#FEF3C7] font-label-caps text-label-caps uppercase">
+<span class="w-2 h-2 rounded-full bg-[#F59E0B]"></span>
+                                    Pending
+                                </span>
+</td>
+<td class="px-md py-md text-right">
+<button class="bg-tertiary-container text-on-tertiary font-body-sm text-body-sm px-md py-xs rounded hover:bg-tertiary transition-colors inline-flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+                                    Verify
+                                </button>
+</td>
+</tr>
+<!-- Row 2: Verified -->
+<tr class="hover:bg-[#F0F7FF] transition-colors group">
+<td class="px-md py-md text-center">
+<span class="material-symbols-outlined text-outline" title="Physical Script">description</span>
+</td>
+<td class="px-md py-md font-data-mono text-data-mono text-secondary">RX-7741-B</td>
+<td class="px-md py-md font-medium">Luke Crain</td>
+<td class="px-md py-md text-on-surface-variant">Dr. Markway</td>
+<td class="px-md py-md">
+<div class="flex flex-col gap-xs">
+<span>Lisinopril 10mg</span>
+<span class="font-data-mono text-data-mono text-secondary">QTY: 90</span>
+</div>
+</td>
+<td class="px-md py-md font-data-mono text-data-mono text-right text-secondary">2023-10-26</td>
+<td class="px-md py-md text-center">
+<span class="inline-flex items-center gap-xs px-sm py-xs rounded-full bg-[#F0FDF4] text-[#166534] border border-[#DCFCE7] font-label-caps text-label-caps uppercase">
+<span class="w-2 h-2 rounded-full bg-[#22C55E]"></span>
+                                    Verified
+                                </span>
+</td>
+<td class="px-md py-md text-right">
+<button class="text-secondary hover:text-primary transition-colors p-xs rounded">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3: Expired -->
+<tr class="hover:bg-[#F0F7FF] transition-colors group opacity-80">
+<td class="px-md py-md text-center">
+<span class="material-symbols-outlined text-outline" title="Digital Prescription">phone_iphone</span>
+</td>
+<td class="px-md py-md font-data-mono text-data-mono text-secondary">RX-1102-C</td>
+<td class="px-md py-md font-medium text-on-surface-variant">Theodora Vance</td>
+<td class="px-md py-md text-on-surface-variant">Dr. Sanderson</td>
+<td class="px-md py-md text-on-surface-variant">
+<div class="flex flex-col gap-xs">
+<span>Atorvastatin 20mg</span>
+<span class="font-data-mono text-data-mono text-secondary">QTY: 30</span>
+</div>
+</td>
+<td class="px-md py-md font-data-mono text-data-mono text-right text-secondary">2022-05-14</td>
+<td class="px-md py-md text-center">
+<span class="inline-flex items-center gap-xs px-sm py-xs rounded-full bg-error-container text-on-error-container font-label-caps text-label-caps uppercase">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+                                    Expired
+                                </span>
+</td>
+<td class="px-md py-md text-right">
+<button class="text-secondary hover:text-primary transition-colors p-xs rounded">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</td>
+</tr>
+<!-- Row 4: Pending -->
+<tr class="hover:bg-[#F0F7FF] transition-colors group">
+<td class="px-md py-md text-center">
+<span class="material-symbols-outlined text-outline" title="Digital Prescription">phone_iphone</span>
+</td>
+<td class="px-md py-md font-data-mono text-data-mono text-secondary">RX-9921-X</td>
+<td class="px-md py-md font-medium">Shirley Jackson</td>
+<td class="px-md py-md text-on-surface-variant">Dr. Montague</td>
+<td class="px-md py-md">
+<div class="flex flex-col gap-xs">
+<span>Metformin 850mg</span>
+<span class="font-data-mono text-data-mono text-secondary">QTY: 60</span>
+</div>
+</td>
+<td class="px-md py-md font-data-mono text-data-mono text-right text-secondary">2023-10-28</td>
+<td class="px-md py-md text-center">
+<span class="inline-flex items-center gap-xs px-sm py-xs rounded-full bg-[#FFFBEB] text-[#B45309] border border-[#FEF3C7] font-label-caps text-label-caps uppercase">
+<span class="w-2 h-2 rounded-full bg-[#F59E0B]"></span>
+                                    Pending
+                                </span>
+</td>
+<td class="px-md py-md text-right">
+<button class="bg-tertiary-container text-on-tertiary font-body-sm text-body-sm px-md py-xs rounded hover:bg-tertiary transition-colors inline-flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+                                    Verify
+                                </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Mobile Card View -->
+<div class="lg:hidden flex flex-col gap-md">
+<!-- Card 1 -->
+<div class="bg-surface border border-outline-variant rounded p-md flex flex-col gap-md relative">
+<div class="absolute top-md right-md">
+<span class="inline-flex items-center gap-xs px-sm py-xs rounded-full bg-[#FFFBEB] text-[#B45309] border border-[#FEF3C7] font-label-caps text-label-caps uppercase">
+                            Pending
+                        </span>
+</div>
+<div>
+<div class="flex items-center gap-xs mb-xs">
+<span class="material-symbols-outlined text-[16px] text-outline">phone_iphone</span>
+<span class="font-data-mono text-data-mono text-secondary">RX-9082-A</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Eleanor Vance</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Dr. Montague</p>
+</div>
+<div class="bg-surface-container-low p-sm rounded border border-surface-variant flex justify-between items-center">
+<div>
+<p class="font-body-md text-body-md font-medium">Amoxicillin 500mg</p>
+<p class="font-data-mono text-data-mono text-secondary">QTY: 30</p>
+</div>
+<p class="font-data-mono text-data-mono text-secondary">Oct 27, 23</p>
+</div>
+<button class="w-full bg-tertiary-container text-on-tertiary font-body-md text-body-md py-sm rounded hover:bg-tertiary transition-colors flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+                        Verify Prescription
+                    </button>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface border border-outline-variant rounded p-md flex flex-col gap-md relative">
+<div class="absolute top-md right-md">
+<span class="inline-flex items-center gap-xs px-sm py-xs rounded-full bg-[#F0FDF4] text-[#166534] border border-[#DCFCE7] font-label-caps text-label-caps uppercase">
+                            Verified
+                        </span>
+</div>
+<div>
+<div class="flex items-center gap-xs mb-xs">
+<span class="material-symbols-outlined text-[16px] text-outline">description</span>
+<span class="font-data-mono text-data-mono text-secondary">RX-7741-B</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Luke Crain</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Dr. Markway</p>
+</div>
+<div class="bg-surface-container-low p-sm rounded border border-surface-variant flex justify-between items-center">
+<div>
+<p class="font-body-md text-body-md font-medium">Lisinopril 10mg</p>
+<p class="font-data-mono text-data-mono text-secondary">QTY: 90</p>
+</div>
+<p class="font-data-mono text-data-mono text-secondary">Oct 26, 23</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>
