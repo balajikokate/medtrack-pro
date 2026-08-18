@@ -3,12 +3,43 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getDashboard } from '../api/dashboard';
 import { listPrescriptions } from '../api/prescriptions';
+import { getRecentPOResponses } from '../api/suppliers';
+
+const SEEN_KEYS_STORAGE = 'medtrack_notif_seen_keys';
+
+function loadSeenKeys() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(SEEN_KEYS_STORAGE) || '[]'));
+  } catch {
+    return new Set();
+  }
+}
+
+function saveSeenKeys(set) {
+  localStorage.setItem(SEEN_KEYS_STORAGE, JSON.stringify([...set]));
+}
+
+// Turns a PO's line items into a short "how much did they actually confirm" summary
+// so the notification itself answers the question, not just "an order was approved."
+function poQuantitySummary(po) {
+  const lines = Array.isArray(po.items?.lines) ? po.items.lines : [];
+  if (lines.length === 0) return '';
+  const anyShort = lines.some((l) => l.fulfilledQuantity !== undefined && l.fulfilledQuantity < l.quantity);
+  if (lines.length === 1) {
+    const l = lines[0];
+    return `: ${l.name} ${l.fulfilledQuantity ?? l.quantity}/${l.quantity}${anyShort ? ' — short' : ''}`;
+  }
+  const totalOrdered = lines.reduce((sum, l) => sum + l.quantity, 0);
+  const totalFulfilled = lines.reduce((sum, l) => sum + (l.fulfilledQuantity ?? l.quantity), 0);
+  return `: ${totalFulfilled}/${totalOrdered} units confirmed${anyShort ? ' — short on some items' : ''}`;
+}
 
 export default function Topbar({ title, onMenuClick, search, onSearchChange, searchPlaceholder }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [unseenCount, setUnseenCount] = useState(0);
 
   const initials = (user?.name || 'U')
     .split(' ')
@@ -19,7 +50,11 @@ export default function Topbar({ title, onMenuClick, search, onSearchChange, sea
 
   async function fetchNotifications() {
     try {
-      const [dashRes, presRes] = await Promise.all([getDashboard(), listPrescriptions()]);
+      const [dashRes, presRes, poRes] = await Promise.all([
+        getDashboard(),
+        listPrescriptions(),
+        getRecentPOResponses(),
+      ]);
       const items = [];
       (dashRes.data.restockList || []).forEach((p) =>
         items.push({
@@ -40,15 +75,33 @@ export default function Topbar({ title, onMenuClick, search, onSearchChange, sea
       const pendingCount = presRes.data.counts?.pending ?? presRes.data.data?.length ?? 0;
       if (pendingCount > 0) {
         items.push({
-          key: 'prescriptions-pending',
+          // Count baked into the key so a change in how many are pending re-flags as new.
+          key: `prescriptions-pending-${pendingCount}`,
           icon: 'prescriptions',
           text: `${pendingCount} prescription${pendingCount > 1 ? 's' : ''} awaiting verification`,
           to: '/prescriptions',
         });
       }
-      setNotifications(items);
+      (poRes.data || []).forEach((po) => {
+        const approved = po.status === 'Approved';
+        items.push({
+          key: `po-${po.id}`,
+          icon: approved ? 'check_circle' : 'cancel',
+          text: `${po.supplier?.name || 'A supplier'} ${approved ? 'approved' : 'rejected'} ${po.poNumber}${
+            approved ? poQuantitySummary(po) : ''
+          }`,
+          to: '/suppliers',
+        });
+      });
+
+      const seenKeys = loadSeenKeys();
+      const withSeenFlags = items.map((item) => ({ ...item, isNew: !seenKeys.has(item.key) }));
+
+      setNotifications(withSeenFlags);
+      setUnseenCount(withSeenFlags.filter((i) => i.isNew).length);
     } catch {
       setNotifications([]);
+      setUnseenCount(0);
     }
   }
 
@@ -58,9 +111,18 @@ export default function Topbar({ title, onMenuClick, search, onSearchChange, sea
     return () => clearInterval(interval);
   }, []);
 
-  function goTo(to) {
+  function handleNotificationClick(n) {
     setNotifOpen(false);
-    navigate(to);
+    const seenKeys = loadSeenKeys();
+    seenKeys.add(n.key);
+    saveSeenKeys(seenKeys);
+    setNotifications((prev) => prev.map((item) => (item.key === n.key ? { ...item, isNew: false } : item)));
+    if (n.isNew) setUnseenCount((prev) => Math.max(0, prev - 1));
+    navigate(n.to);
+  }
+
+  function openNotifications() {
+    setNotifOpen((v) => !v);
   }
 
   return (
@@ -94,13 +156,16 @@ export default function Topbar({ title, onMenuClick, search, onSearchChange, sea
       <div className="flex items-center gap-md">
         <div className="relative">
           <button
-            onClick={() => setNotifOpen((v) => !v)}
+            onClick={openNotifications}
             className="relative text-on-surface-variant hover:text-primary opacity-80 hover:opacity-100 transition-opacity p-sm rounded-full hover:bg-surface-container"
           >
             <span className="material-symbols-outlined">notifications</span>
-            {notifications.length > 0 && (
-              <span className="absolute top-0.5 right-0.5 min-w-[16px] h-[16px] px-[3px] flex items-center justify-center bg-error text-white text-[10px] font-bold rounded-full border-2 border-surface">
-                {notifications.length > 9 ? '9+' : notifications.length}
+            {unseenCount > 0 && (
+              <span className="absolute top-0.5 right-0.5 flex">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-error opacity-60 animate-ping"></span>
+                <span className="relative inline-flex min-w-[16px] h-[16px] px-[3px] items-center justify-center bg-error text-white text-[10px] font-bold rounded-full border-2 border-surface leading-none">
+                  {unseenCount > 9 ? '9+' : unseenCount}
+                </span>
               </span>
             )}
           </button>
@@ -120,11 +185,18 @@ export default function Topbar({ title, onMenuClick, search, onSearchChange, sea
                   notifications.map((n) => (
                     <button
                       key={n.key}
-                      onClick={() => goTo(n.to)}
-                      className="w-full flex items-start gap-sm px-md py-sm text-left border-b border-outline-variant last:border-0 hover:bg-surface-container-low transition-colors"
+                      onClick={() => handleNotificationClick(n)}
+                      className={`w-full flex items-start gap-sm px-md py-sm text-left border-b border-outline-variant last:border-0 hover:bg-surface-container-low transition-colors ${
+                        n.isNew ? 'bg-primary-fixed/20' : ''
+                      }`}
                     >
                       <span className="material-symbols-outlined text-error text-[18px] mt-0.5">{n.icon}</span>
-                      <span className="font-body-sm text-body-sm text-on-surface">{n.text}</span>
+                      <span className="font-body-sm text-body-sm text-on-surface flex-1">{n.text}</span>
+                      {n.isNew && (
+                        <span className="shrink-0 font-label-caps text-[10px] uppercase tracking-wider bg-primary text-on-primary px-1.5 py-0.5 rounded-full">
+                          New
+                        </span>
+                      )}
                     </button>
                   ))
                 )}

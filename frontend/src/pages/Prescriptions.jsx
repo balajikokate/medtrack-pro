@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import StatusBadge from '../components/StatusBadge';
 import Modal from '../components/Modal';
+import Spinner from '../components/Spinner';
 import { listPrescriptions, verifyPrescription, createPrescription } from '../api/prescriptions';
+import { useToast } from '../context/ToastContext';
 
 const EMPTY_FORM = {
   type: 'digital',
@@ -14,6 +16,7 @@ const EMPTY_FORM = {
 };
 
 export default function Prescriptions() {
+  const { showToast } = useToast();
   const [prescriptions, setPrescriptions] = useState([]);
   const [counts, setCounts] = useState({ all: 0, pending: 0, verified: 0, expired: 0 });
   const [search, setSearch] = useState('');
@@ -21,6 +24,8 @@ export default function Prescriptions() {
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
+  const [verifyingId, setVerifyingId] = useState(null);
 
   async function fetchData() {
     try {
@@ -38,22 +43,36 @@ export default function Prescriptions() {
   }, [search, statusFilter]);
 
   async function handleVerify(id) {
+    if (verifyingId) return;
+    setVerifyingId(id);
     try {
       await verifyPrescription(id);
       fetchData();
+      showToast('Prescription verified.');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to verify');
+      const msg = err.response?.data?.message || 'Failed to verify';
+      setError(msg);
+      showToast(msg, 'error');
+    } finally {
+      setVerifyingId(null);
     }
   }
 
   async function handleCreate() {
+    if (saving) return;
+    setSaving(true);
     try {
       await createPrescription(form);
       setModalOpen(false);
       setForm(EMPTY_FORM);
       fetchData();
+      showToast('Prescription added.');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create prescription');
+      const msg = err.response?.data?.message || 'Failed to create prescription';
+      setError(msg);
+      showToast(msg, 'error');
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -166,10 +185,11 @@ export default function Prescriptions() {
                   {rx.status === 'Pending' ? (
                     <button
                       onClick={() => handleVerify(rx.id)}
-                      className="bg-tertiary-container text-on-tertiary font-body-sm text-body-sm px-md py-xs rounded hover:bg-tertiary transition-colors inline-flex items-center gap-xs"
+                      disabled={verifyingId === rx.id}
+                      className="bg-tertiary-container text-on-tertiary font-body-sm text-body-sm px-md py-xs rounded hover:bg-tertiary transition-colors inline-flex items-center gap-xs disabled:opacity-50"
                     >
-                      <span className="material-symbols-outlined text-[16px]">check_circle</span>
-                      Verify
+                      {verifyingId === rx.id ? <Spinner /> : <span className="material-symbols-outlined text-[16px]">check_circle</span>}
+                      {verifyingId === rx.id ? 'Verifying...' : 'Verify'}
                     </button>
                   ) : (
                     <span className="text-secondary font-body-sm text-body-sm">&mdash;</span>
@@ -195,9 +215,11 @@ export default function Prescriptions() {
             </button>
             <button
               onClick={handleCreate}
-              className="bg-primary text-on-primary font-body-md py-sm px-md rounded hover:bg-primary-container transition-colors"
+              disabled={saving}
+              className="bg-primary text-on-primary font-body-md py-sm px-md rounded hover:bg-primary-container transition-colors disabled:opacity-50 flex items-center gap-sm"
             >
-              Save
+              {saving && <Spinner />}
+              {saving ? 'Saving...' : 'Save'}
             </button>
           </>
         }

@@ -15,6 +15,9 @@ const STYLES = {
   'On Duty': 'bg-tertiary-container/10 text-tertiary border border-tertiary-container/20',
   'Off Duty': 'bg-surface-variant text-on-surface-variant border border-outline-variant',
   Completed: 'bg-tertiary/10 text-tertiary',
+  Approved: 'bg-[#F0FDF4] text-[#166534] border border-[#DCFCE7]',
+  Rejected: 'bg-error-container text-on-error-container',
+  Reassigned: 'bg-surface-container-highest text-on-surface-variant',
 };
 
 export default function StatusBadge({ status }) {

@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import StatusBadge from '../components/StatusBadge';
 import Modal from '../components/Modal';
-import { listProducts, createProduct, updateProduct, deleteProduct } from '../api/products';
+import Spinner from '../components/Spinner';
+import { listProducts, createProduct, updateProduct, deleteProduct, getProductBatches } from '../api/products';
 import { listSuppliers } from '../api/suppliers';
+import { useToast } from '../context/ToastContext';
 
 const EMPTY_FORM = {
   name: '',
@@ -20,6 +22,7 @@ const EMPTY_FORM = {
 };
 
 export default function Inventory() {
+  const { showToast } = useToast();
   const [products, setProducts] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -32,7 +35,24 @@ export default function Inventory() {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [suppliers, setSuppliers] = useState([]);
+  const [expandedProductId, setExpandedProductId] = useState(null);
+  const [batchesByProduct, setBatchesByProduct] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
   const limit = 10;
+
+  function toggleBatches(productId) {
+    if (expandedProductId === productId) {
+      setExpandedProductId(null);
+      return;
+    }
+    setExpandedProductId(productId);
+    if (!batchesByProduct[productId]) {
+      getProductBatches(productId)
+        .then((res) => setBatchesByProduct((prev) => ({ ...prev, [productId]: res.data })))
+        .catch(() => setBatchesByProduct((prev) => ({ ...prev, [productId]: [] })));
+    }
+  }
 
   useEffect(() => {
     listSuppliers().then((res) => setSuppliers(res.data)).catch(() => {});
@@ -81,6 +101,8 @@ export default function Inventory() {
   }
 
   async function handleSave() {
+    if (saving) return;
+    setSaving(true);
     try {
       if (editingId) {
         await updateProduct(editingId, form);
@@ -89,18 +111,30 @@ export default function Inventory() {
       }
       setModalOpen(false);
       fetchProducts();
+      showToast(editingId ? 'Product updated.' : 'Product added.');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save product');
+      const msg = err.response?.data?.message || 'Failed to save product';
+      setError(msg);
+      showToast(msg, 'error');
+    } finally {
+      setSaving(false);
     }
   }
 
   async function handleDelete(id) {
+    if (deletingId) return;
     if (!window.confirm('Delete this product?')) return;
+    setDeletingId(id);
     try {
       await deleteProduct(id);
       fetchProducts();
+      showToast('Product deleted.');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to delete product');
+      const msg = err.response?.data?.message || 'Failed to delete product';
+      setError(msg);
+      showToast(msg, 'error');
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -186,10 +220,18 @@ export default function Inventory() {
                 </tr>
               )}
               {products.map((p) => (
-                <tr key={p.id} className="hover:bg-[#F0F7FF] transition-colors group">
+                <React.Fragment key={p.id}>
+                <tr className="hover:bg-[#F0F7FF] transition-colors group">
                   <td className="px-md py-4 whitespace-nowrap">
-                    <div className="font-body-md text-body-md font-semibold text-on-surface">{p.name}</div>
-                    <div className="font-body-sm text-body-sm text-on-surface-variant">{p.form}</div>
+                    <button onClick={() => toggleBatches(p.id)} className="flex items-center gap-xs text-left">
+                      <span className="material-symbols-outlined text-[18px] text-secondary">
+                        {expandedProductId === p.id ? 'expand_less' : 'expand_more'}
+                      </span>
+                      <div>
+                        <div className="font-body-md text-body-md font-semibold text-on-surface">{p.name}</div>
+                        <div className="font-body-sm text-body-sm text-on-surface-variant">{p.form}</div>
+                      </div>
+                    </button>
                   </td>
                   <td className="px-md py-4 whitespace-nowrap">
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full font-body-sm text-body-sm bg-surface-container text-on-surface-variant">
@@ -197,13 +239,13 @@ export default function Inventory() {
                     </span>
                   </td>
                   <td className="px-md py-4 whitespace-nowrap font-data-mono text-data-mono text-on-surface-variant">
-                    {p.batchNo}
+                    {p.batchNo || '—'}
                   </td>
                   <td className="px-md py-4 whitespace-nowrap font-body-sm text-body-sm text-on-surface-variant">
                     {p.supplier?.name || <span className="text-outline">—</span>}
                   </td>
                   <td className="px-md py-4 whitespace-nowrap font-data-mono text-data-mono text-on-surface-variant">
-                    {p.expiryDate?.slice(0, 10)}
+                    {p.expiryDate ? p.expiryDate.slice(0, 10) : <span className="text-outline">— soonest —</span>}
                   </td>
                   <td className="px-md py-4 whitespace-nowrap font-data-mono text-data-mono text-on-surface text-right">
                     {p.quantity.toLocaleString()}
@@ -220,12 +262,66 @@ export default function Inventory() {
                     </button>
                     <button
                       onClick={() => handleDelete(p.id)}
-                      className="text-secondary hover:text-error transition-colors p-1 rounded hover:bg-error-container"
+                      disabled={deletingId === p.id}
+                      className="text-secondary hover:text-error transition-colors p-1 rounded hover:bg-error-container disabled:opacity-50"
                     >
-                      <span className="material-symbols-outlined text-[20px]">delete</span>
+                      {deletingId === p.id ? <Spinner /> : <span className="material-symbols-outlined text-[20px]">delete</span>}
                     </button>
                   </td>
                 </tr>
+                {expandedProductId === p.id && (
+                  <tr className="bg-surface-container-lowest">
+                    <td colSpan="8" className="p-md">
+                      <p className="font-label-caps text-label-caps text-secondary uppercase mb-sm">
+                        Batches (each strip/delivery, own expiry)
+                      </p>
+                      {!batchesByProduct[p.id] && (
+                        <p className="font-body-sm text-body-sm text-on-surface-variant">Loading...</p>
+                      )}
+                      {batchesByProduct[p.id]?.length === 0 && (
+                        <p className="font-body-sm text-body-sm text-on-surface-variant">No batch records yet.</p>
+                      )}
+                      {batchesByProduct[p.id]?.length > 0 && (
+                        <table className="w-full text-left">
+                          <thead>
+                            <tr>
+                              <th className="p-xs font-label-caps text-[10px] text-secondary uppercase">Batch No</th>
+                              <th className="p-xs font-label-caps text-[10px] text-secondary uppercase text-right">Quantity</th>
+                              <th className="p-xs font-label-caps text-[10px] text-secondary uppercase">Expiry Date</th>
+                              <th className="p-xs font-label-caps text-[10px] text-secondary uppercase">Source</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {batchesByProduct[p.id].map((b) => {
+                              const expired = new Date(b.expiryDate).getTime() < Date.now();
+                              return (
+                                <tr key={b.id} className="border-t border-outline-variant">
+                                  <td className="p-xs font-data-mono text-data-mono text-body-sm text-on-surface">
+                                    {b.batchNo}
+                                  </td>
+                                  <td className="p-xs font-data-mono text-data-mono text-body-sm text-on-surface text-right">
+                                    {b.quantity}
+                                  </td>
+                                  <td
+                                    className={`p-xs font-data-mono text-data-mono text-body-sm ${
+                                      expired ? 'text-error font-semibold' : 'text-on-surface-variant'
+                                    }`}
+                                  >
+                                    {b.expiryDate.slice(0, 10)} {expired && '(expired)'}
+                                  </td>
+                                  <td className="p-xs font-body-sm text-body-sm text-on-surface-variant capitalize">
+                                    {b.source.replace('-', ' ')}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      )}
+                    </td>
+                  </tr>
+                )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>
@@ -269,9 +365,11 @@ export default function Inventory() {
             </button>
             <button
               onClick={handleSave}
-              className="bg-primary text-on-primary font-body-md py-sm px-md rounded hover:bg-primary-container transition-colors"
+              disabled={saving}
+              className="bg-primary text-on-primary font-body-md py-sm px-md rounded hover:bg-primary-container transition-colors disabled:opacity-50 flex items-center gap-sm"
             >
-              Save
+              {saving && <Spinner />}
+              {saving ? 'Saving...' : 'Save'}
             </button>
           </>
         }

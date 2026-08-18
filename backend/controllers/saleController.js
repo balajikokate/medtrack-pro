@@ -1,4 +1,5 @@
 const prisma = require('../config/prisma');
+const { deductFEFO } = require('../utils/batchSync');
 
 async function getSales(req, res, next) {
   try {
@@ -53,28 +54,31 @@ async function createSale(req, res, next) {
     const total = Number((subtotal + tax - discount).toFixed(2));
     const txnNumber = `TXN-${Date.now().toString().slice(-8)}`;
 
-    const sale = await prisma.sale.create({
-      data: {
-        txnNumber,
-        customerName,
-        prescriptionId: prescriptionId || undefined,
-        subtotal,
-        tax,
-        discount,
-        total,
-        paymentMethod,
-        cashierId: req.user.id,
-        items: { create: resolvedItems },
-      },
-      include: { items: true },
-    });
-
-    for (const item of resolvedItems) {
-      await prisma.product.update({
-        where: { id: item.productId },
-        data: { quantity: { decrement: item.quantity } },
+    const sale = await prisma.$transaction(async (tx) => {
+      const created = await tx.sale.create({
+        data: {
+          txnNumber,
+          customerName,
+          prescriptionId: prescriptionId || undefined,
+          subtotal,
+          tax,
+          discount,
+          total,
+          paymentMethod,
+          cashierId: req.user.id,
+          items: { create: resolvedItems },
+        },
+        include: { items: true },
       });
-    }
+
+      // Sell the soonest-expiring stock first (FEFO) — may span more than one
+      // batch of the same medicine if the oldest batch doesn't cover the full sale.
+      for (const item of resolvedItems) {
+        await deductFEFO(tx, item.productId, item.quantity);
+      }
+
+      return created;
+    }, { timeout: 20000, maxWait: 10000 });
 
     res.status(201).json(sale);
   } catch (err) {

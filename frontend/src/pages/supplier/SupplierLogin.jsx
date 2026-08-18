@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import Spinner from '../components/Spinner';
+import { useSupplierAuth } from '../../context/SupplierAuthContext';
+import Spinner from '../../components/Spinner';
 
-export default function Login() {
-  const [email, setEmail] = useState('admin@medtrack.pro');
-  const [password, setPassword] = useState('password123');
+export default function SupplierLogin() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login } = useSupplierAuth();
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
@@ -18,7 +18,7 @@ export default function Login() {
     setLoading(true);
     try {
       await login(email, password);
-      navigate('/');
+      navigate('/supplier');
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
     } finally {
@@ -31,12 +31,10 @@ export default function Login() {
       <div className="w-full max-w-sm bg-surface rounded-xl border border-outline-variant shadow-[0px_4px_20px_rgba(15,82,186,0.08)] p-xl">
         <div className="flex flex-col items-center gap-sm mb-lg text-center">
           <div className="w-14 h-14 rounded-xl bg-primary-container flex items-center justify-center text-on-primary-container">
-            <span className="material-symbols-outlined text-[28px]" data-weight="fill">
-              local_pharmacy
-            </span>
+            <span className="material-symbols-outlined text-[28px]">local_shipping</span>
           </div>
-          <h1 className="font-headline-md text-headline-md text-primary font-bold mt-sm">MedTrack Pro</h1>
-          <p className="font-body-sm text-body-sm text-on-surface-variant">Pharmacy Management System</p>
+          <h1 className="font-headline-md text-headline-md text-primary font-bold mt-sm">Supplier Portal</h1>
+          <p className="font-body-sm text-body-sm text-on-surface-variant">MedTrack Pro — Purchase Order Approvals</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-md">
@@ -79,8 +77,7 @@ export default function Login() {
         </form>
 
         <p className="text-center font-body-sm text-body-sm text-on-surface-variant mt-lg">
-          Demo credentials pre-filled — run <code className="font-data-mono text-data-mono">npm run seed</code> in
-          the backend first.
+          Use the email and password your pharmacy set up for you. Contact them if you don't have one yet.
         </p>
       </div>
     </div>

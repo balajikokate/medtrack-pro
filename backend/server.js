@@ -13,6 +13,9 @@ const prescriptionRoutes = require('./routes/prescriptionRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
+const supplierAuthRoutes = require('./routes/supplierAuthRoutes');
+const supplierPortalRoutes = require('./routes/supplierPortalRoutes');
+const { startReminderScheduler } = require('./jobs/reminderScheduler');
 
 const app = express();
 
@@ -31,9 +34,14 @@ app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/supplier-auth', supplierAuthRoutes);
+app.use('/api/supplier-portal', supplierPortalRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`MedTrack Pro API running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`MedTrack Pro API running on port ${PORT}`);
+  startReminderScheduler();
+});

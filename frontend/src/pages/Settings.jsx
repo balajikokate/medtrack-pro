@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import { getSettings, updateSettings } from '../api/settings';
+import { useToast } from '../context/ToastContext';
+import Spinner from '../components/Spinner';
 
 export default function Settings() {
+  const { showToast } = useToast();
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -15,6 +18,7 @@ export default function Settings() {
   }, []);
 
   async function handleSave() {
+    if (saving) return;
     setSaving(true);
     setMessage('');
     setError('');
@@ -22,8 +26,11 @@ export default function Settings() {
       const res = await updateSettings(form);
       setForm(res.data);
       setMessage('Settings saved.');
+      showToast('Settings saved.');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save settings');
+      const msg = err.response?.data?.message || 'Failed to save settings';
+      setError(msg);
+      showToast(msg, 'error');
     } finally {
       setSaving(false);
     }
@@ -73,13 +80,24 @@ export default function Settings() {
               value={form.complianceOfficer}
               onChange={(v) => setForm({ ...form, complianceOfficer: v })}
             />
+            <div className="md:col-span-2">
+              <Field
+                label="Admin Notification Email"
+                value={form.adminEmail}
+                onChange={(v) => setForm({ ...form, adminEmail: v })}
+              />
+              <p className="font-body-sm text-body-sm text-on-surface-variant mt-xs">
+                Where you're notified when a supplier approves or rejects a purchase order.
+              </p>
+            </div>
           </div>
           <div className="mt-lg flex justify-end">
             <button
               onClick={handleSave}
               disabled={saving}
-              className="bg-primary text-on-primary font-body-md py-sm px-md rounded hover:bg-primary-container transition-colors disabled:opacity-60"
+              className="bg-primary text-on-primary font-body-md py-sm px-md rounded hover:bg-primary-container transition-colors disabled:opacity-60 flex items-center gap-sm"
             >
+              {saving && <Spinner />}
               {saving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>

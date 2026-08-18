@@ -26,8 +26,12 @@ model Product {
   form                 String?
   category             String
   ndc                  String?
+  // batchNo/expiryDate/quantity are a cached snapshot derived from `batches`:
+  // quantity = sum of all batch quantities, batchNo/expiryDate = the soonest-expiring
+  // batch with stock left. Kept in sync by utils/batchSync.js whenever batches change —
+  // never write these three directly except through that helper.
   batchNo              String?
-  expiryDate           DateTime
+  expiryDate           DateTime?
   quantity             Int      @default(0)
   minLevel             Int      @default(10)
   price                Float    @default(0)
@@ -36,8 +40,21 @@ model Product {
   updatedAt            DateTime @updatedAt
 
   supplierId String?
-  supplier   Supplier?  @relation(fields: [supplierId], references: [id])
+  supplier   Supplier?      @relation(fields: [supplierId], references: [id])
   saleItems  SaleItem[]
+  batches    ProductBatch[]
+}
+
+model ProductBatch {
+  id         String   @id @default(cuid())
+  batchNo    String
+  quantity   Int
+  expiryDate DateTime
+  source     String   @default("manual") // manual | purchase-order
+  createdAt  DateTime @default(now())
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model Sale {
@@ -84,6 +101,7 @@ model Supplier {
   contactEmail   String?
   contactPhone   String?
   phoneExt       String?
+  password       String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -92,16 +110,25 @@ model Supplier {
 }
 
 model PurchaseOrder {
-  id         String   @id @default(cuid())
-  poNumber   String   @unique
-  date       DateTime @default(now())
-  status     String   @default("Pending")
-  amount     Float
-  items      Json?
-  createdAt  DateTime @default(now())
+  id            String    @id @default(cuid())
+  poNumber      String    @unique
+  date          DateTime  @default(now())
+  status        String    @default("Pending") // Pending | Approved | Delivered | Rejected | Reassigned
+  deliveredAt   DateTime?
+  amount        Float
+  items         Json?
+  neededByDate  DateTime
+  reminderCount Int       @default(0)
+  lastReminderAt DateTime?
+  respondedAt   DateTime?
+  createdAt     DateTime  @default(now())
 
   supplierId String
   supplier   Supplier @relation(fields: [supplierId], references: [id])
+
+  reassignedFromId String?         @unique
+  reassignedFrom    PurchaseOrder? @relation("POReassignment", fields: [reassignedFromId], references: [id])
+  reassignedTo      PurchaseOrder? @relation("POReassignment")
 }
 
 model Staff {
@@ -142,6 +169,7 @@ model Settings {
   taxId             String   @default("")
   address           String   @default("")
   contactNumber     String   @default("")
+  adminEmail        String   @default("")
   complianceOfficer String   @default("")
   lowStockAlerts    Boolean  @default(true)
   automatedBackups  Boolean  @default(true)

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
+import SupplierProtectedRoute from './components/SupplierProtectedRoute';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Inventory from './pages/Inventory';
@@ -10,11 +11,22 @@ import Prescriptions from './pages/Prescriptions';
 import Analytics from './pages/Analytics';
 import Staff from './pages/Staff';
 import Settings from './pages/Settings';
+import SupplierLogin from './pages/supplier/SupplierLogin';
+import SupplierDashboard from './pages/supplier/SupplierDashboard';
 
 export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/supplier/login" element={<SupplierLogin />} />
+      <Route
+        path="/supplier"
+        element={
+          <SupplierProtectedRoute>
+            <SupplierDashboard />
+          </SupplierProtectedRoute>
+        }
+      />
       <Route
         path="/"
         element={

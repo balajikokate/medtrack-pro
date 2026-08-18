@@ -2,8 +2,8 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const prisma = require('../config/prisma');
 
-function signToken(id) {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+function signToken(id, type = 'user') {
+  return jwt.sign({ id, type }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   });
 }

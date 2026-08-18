@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import Modal from '../components/Modal';
+import Spinner from '../components/Spinner';
 import { listProducts } from '../api/products';
 import { createSale } from '../api/sales';
 import { verifyPassword } from '../api/auth';
@@ -76,6 +77,7 @@ export default function SalesPOS() {
   const needsAuthorization = cart.some((i) => i.requiresPrescription);
 
   async function submitSale() {
+    if (submitting) return;
     setSubmitting(true);
     setError('');
     setSuccess('');
@@ -106,6 +108,7 @@ export default function SalesPOS() {
   }
 
   async function handleAuthorize() {
+    if (authChecking) return;
     setAuthChecking(true);
     setAuthError('');
     try {
@@ -290,7 +293,7 @@ export default function SalesPOS() {
                 disabled={cart.length === 0 || submitting}
                 className="w-full bg-[#22c55e] hover:bg-[#16a34a] text-white font-headline-sm text-headline-sm py-md rounded-lg flex items-center justify-center gap-sm shadow-sm transition-colors disabled:opacity-50"
               >
-                <span className="material-symbols-outlined">{needsAuthorization ? 'lock' : 'payments'}</span>
+                {submitting ? <Spinner /> : <span className="material-symbols-outlined">{needsAuthorization ? 'lock' : 'payments'}</span>}
                 {submitting ? 'Processing...' : needsAuthorization ? `Authorize & Pay ${formatCurrency(total)}` : `Pay ${formatCurrency(total)}`}
               </button>
             </div>
@@ -313,8 +316,9 @@ export default function SalesPOS() {
             <button
               onClick={handleAuthorize}
               disabled={!authPassword || authChecking}
-              className="bg-primary text-on-primary font-body-md py-sm px-md rounded hover:bg-primary-container transition-colors disabled:opacity-50"
+              className="bg-primary text-on-primary font-body-md py-sm px-md rounded hover:bg-primary-container transition-colors disabled:opacity-50 flex items-center gap-sm"
             >
+              {authChecking && <Spinner />}
               {authChecking ? 'Verifying...' : 'Authorize & Pay'}
             </button>
           </>

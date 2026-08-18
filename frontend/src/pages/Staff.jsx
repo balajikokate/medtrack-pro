@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import Modal from '../components/Modal';
+import Spinner from '../components/Spinner';
 import { listStaff, createStaff, updateStaff, getStaffStats } from '../api/staff';
+import { useToast } from '../context/ToastContext';
 
 const ROLES = ['Lead Pharmacist', 'Staff Pharmacist', 'Pharmacy Tech', 'Intern'];
 const EMPTY_FORM = { name: '', role: ROLES[2], licenseId: '', email: '', phone: '', onDuty: true };
@@ -18,6 +20,7 @@ function initials(name) {
 }
 
 export default function Staff() {
+  const { showToast } = useToast();
   const [staff, setStaff] = useState([]);
   const [stats, setStats] = useState(null);
   const [roleFilter, setRoleFilter] = useState('');
@@ -26,6 +29,8 @@ export default function Staff() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [editingId, setEditingId] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [togglingId, setTogglingId] = useState(null);
 
   async function fetchData() {
     try {
@@ -46,15 +51,24 @@ export default function Staff() {
   }, []);
 
   async function toggleDuty(member) {
+    if (togglingId) return;
+    setTogglingId(member.id);
     try {
       await updateStaff(member.id, { onDuty: !member.onDuty });
       fetchData();
+      showToast(`${member.name} marked ${!member.onDuty ? 'on' : 'off'} duty.`);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update');
+      const msg = err.response?.data?.message || 'Failed to update';
+      setError(msg);
+      showToast(msg, 'error');
+    } finally {
+      setTogglingId(null);
     }
   }
 
   async function handleSave() {
+    if (saving) return;
+    setSaving(true);
     try {
       if (editingId) {
         await updateStaff(editingId, form);
@@ -66,8 +80,13 @@ export default function Staff() {
       setForm(EMPTY_FORM);
       fetchData();
       getStaffStats().then((res) => setStats(res.data));
+      showToast(editingId ? 'Staff member updated.' : 'Staff member added.');
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save staff member');
+      const msg = err.response?.data?.message || 'Failed to save staff member';
+      setError(msg);
+      showToast(msg, 'error');
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -204,13 +223,18 @@ export default function Staff() {
                   <td className="py-md px-md">
                     <button
                       onClick={() => toggleDuty(s)}
-                      className={`inline-flex items-center gap-xs px-sm py-xs rounded-full font-label-caps text-label-caps uppercase border transition-colors ${
+                      disabled={togglingId === s.id}
+                      className={`inline-flex items-center gap-xs px-sm py-xs rounded-full font-label-caps text-label-caps uppercase border transition-colors disabled:opacity-50 ${
                         s.onDuty
                           ? 'bg-tertiary-container/10 text-tertiary border-tertiary-container/20'
                           : 'bg-surface-variant text-on-surface-variant border-outline-variant'
                       }`}
                     >
-                      <span className={`w-1.5 h-1.5 rounded-full ${s.onDuty ? 'bg-tertiary-container' : 'bg-outline'}`}></span>
+                      {togglingId === s.id ? (
+                        <Spinner />
+                      ) : (
+                        <span className={`w-1.5 h-1.5 rounded-full ${s.onDuty ? 'bg-tertiary-container' : 'bg-outline'}`}></span>
+                      )}
                       {s.onDuty ? 'On Duty' : 'Off Duty'}
                     </button>
                   </td>
@@ -251,12 +275,14 @@ export default function Staff() {
                 </div>
                 <button
                   onClick={() => toggleDuty(s)}
-                  className={`inline-flex items-center gap-xs px-sm py-xs rounded-full font-label-caps text-label-caps uppercase border ${
+                  disabled={togglingId === s.id}
+                  className={`inline-flex items-center gap-xs px-sm py-xs rounded-full font-label-caps text-label-caps uppercase border disabled:opacity-50 ${
                     s.onDuty
                       ? 'bg-tertiary-container/10 text-tertiary border-tertiary-container/20'
                       : 'bg-surface-variant text-on-surface-variant border-outline-variant'
                   }`}
                 >
+                  {togglingId === s.id && <Spinner />}
                   {s.onDuty ? 'On Duty' : 'Off Duty'}
                 </button>
               </div>
@@ -296,9 +322,11 @@ export default function Staff() {
             </button>
             <button
               onClick={handleSave}
-              className="bg-primary text-on-primary font-body-md py-sm px-md rounded hover:bg-primary-container transition-colors"
+              disabled={saving}
+              className="bg-primary text-on-primary font-body-md py-sm px-md rounded hover:bg-primary-container transition-colors disabled:opacity-50 flex items-center gap-sm"
             >
-              Save
+              {saving && <Spinner />}
+              {saving ? 'Saving...' : 'Save'}
             </button>
           </>
         }
