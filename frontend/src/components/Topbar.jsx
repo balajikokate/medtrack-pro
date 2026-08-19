@@ -4,6 +4,12 @@ import { useAuth } from '../context/AuthContext';
 import { getDashboard } from '../api/dashboard';
 import { listPrescriptions } from '../api/prescriptions';
 import { getRecentPOResponses } from '../api/suppliers';
+import { changePassword } from '../api/auth';
+import { useToast } from '../context/ToastContext';
+import Modal from './Modal';
+import Spinner from './Spinner';
+
+const EMPTY_PW_FORM = { currentPassword: '', newPassword: '', confirmPassword: '' };
 
 const SEEN_KEYS_STORAGE = 'medtrack_notif_seen_keys';
 
@@ -35,11 +41,48 @@ function poQuantitySummary(po) {
 }
 
 export default function Topbar({ title, onMenuClick, search, onSearchChange, searchPlaceholder }) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unseenCount, setUnseenCount] = useState(0);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [pwModalOpen, setPwModalOpen] = useState(false);
+  const [pwForm, setPwForm] = useState(EMPTY_PW_FORM);
+  const [pwError, setPwError] = useState('');
+  const [pwSaving, setPwSaving] = useState(false);
+
+  function openPwModal() {
+    setProfileOpen(false);
+    setPwForm(EMPTY_PW_FORM);
+    setPwError('');
+    setPwModalOpen(true);
+  }
+
+  async function handleChangePassword(e) {
+    e.preventDefault();
+    if (pwSaving) return;
+    setPwError('');
+    if (pwForm.newPassword.length < 8) {
+      setPwError('New password must be at least 8 characters');
+      return;
+    }
+    if (pwForm.newPassword !== pwForm.confirmPassword) {
+      setPwError('New password and confirmation do not match');
+      return;
+    }
+    setPwSaving(true);
+    try {
+      await changePassword(pwForm.currentPassword, pwForm.newPassword);
+      showToast('Password updated.');
+      setPwModalOpen(false);
+    } catch (err) {
+      setPwError(err.response?.data?.message || 'Failed to update password');
+    } finally {
+      setPwSaving(false);
+    }
+  }
 
   const initials = (user?.name || 'U')
     .split(' ')
@@ -204,10 +247,93 @@ export default function Topbar({ title, onMenuClick, search, onSearchChange, sea
             </>
           )}
         </div>
-        <div className="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-label-caps text-label-caps border border-outline-variant">
-          {initials}
+        <div className="relative">
+          <button
+            onClick={() => setProfileOpen((v) => !v)}
+            className="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-label-caps text-label-caps border border-outline-variant hover:ring-2 hover:ring-primary/20 transition-all"
+          >
+            {initials}
+          </button>
+
+          {profileOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
+              <div className="absolute right-0 mt-sm w-56 bg-surface border border-outline-variant rounded-lg shadow-lg z-50 overflow-hidden">
+                <div className="px-md py-sm border-b border-outline-variant bg-surface-container-low">
+                  <p className="font-body-sm text-body-sm font-semibold text-on-surface truncate">{user?.name}</p>
+                  <p className="font-body-sm text-body-sm text-on-surface-variant truncate">{user?.email}</p>
+                </div>
+                <button
+                  onClick={openPwModal}
+                  className="w-full flex items-center gap-sm px-md py-sm text-left font-body-sm text-body-sm text-on-surface hover:bg-surface-container-low transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[18px]">lock_reset</span>
+                  Change Password
+                </button>
+                <button
+                  onClick={logout}
+                  className="w-full flex items-center gap-sm px-md py-sm text-left font-body-sm text-body-sm text-error hover:bg-error-container/30 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[18px]">logout</span>
+                  Logout
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
+
+      <Modal open={pwModalOpen} title="Change Password" onClose={() => setPwModalOpen(false)}>
+        <form onSubmit={handleChangePassword} className="flex flex-col gap-md">
+          <div className="flex flex-col gap-xs">
+            <label className="font-label-caps text-label-caps text-on-surface uppercase">Current Password</label>
+            <input
+              type="password"
+              required
+              value={pwForm.currentPassword}
+              onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })}
+              className="w-full bg-surface border border-outline rounded-lg p-sm font-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+            />
+          </div>
+          <div className="flex flex-col gap-xs">
+            <label className="font-label-caps text-label-caps text-on-surface uppercase">New Password</label>
+            <input
+              type="password"
+              required
+              minLength={8}
+              value={pwForm.newPassword}
+              onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })}
+              className="w-full bg-surface border border-outline rounded-lg p-sm font-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+            />
+          </div>
+          <div className="flex flex-col gap-xs">
+            <label className="font-label-caps text-label-caps text-on-surface uppercase">Confirm New Password</label>
+            <input
+              type="password"
+              required
+              minLength={8}
+              value={pwForm.confirmPassword}
+              onChange={(e) => setPwForm({ ...pwForm, confirmPassword: e.target.value })}
+              className="w-full bg-surface border border-outline rounded-lg p-sm font-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+            />
+          </div>
+          {pwError && (
+            <div className="bg-error-container text-on-error-container font-body-sm text-body-sm rounded-lg p-sm">
+              {pwError}
+            </div>
+          )}
+          <div className="flex justify-end gap-sm mt-sm">
+            <button
+              type="submit"
+              disabled={pwSaving}
+              className="bg-primary text-on-primary font-body-md text-body-md py-sm px-md rounded-lg hover:bg-primary-container transition-colors disabled:opacity-60 flex items-center gap-sm"
+            >
+              {pwSaving && <Spinner />}
+              {pwSaving ? 'Saving...' : 'Update Password'}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </header>
   );
 }

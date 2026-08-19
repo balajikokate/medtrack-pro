@@ -9,6 +9,15 @@ function daysFromNow(days) {
 }
 
 async function seed() {
+  if (process.env.NODE_ENV === 'production') {
+    console.error(
+      'Refusing to run: this seed wipes all data and inserts fake demo content ' +
+      '(fake patients, fake sales). It is for local development and sales demos only. ' +
+      'For a real customer deployment, use `npm run bootstrap` instead.'
+    );
+    process.exit(1);
+  }
+
   await prisma.saleItem.deleteMany();
   await prisma.sale.deleteMany();
   await prisma.purchaseOrder.deleteMany();

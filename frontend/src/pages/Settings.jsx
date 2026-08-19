@@ -114,19 +114,15 @@ export default function Settings() {
         </section>
 
         <section className="bg-white border border-outline-variant rounded-lg p-lg">
-          <h3 className="font-headline-sm text-headline-sm font-semibold text-on-surface mb-md">System Automation</h3>
+          <h3 className="font-headline-sm text-headline-sm font-semibold text-on-surface mb-md">System Status</h3>
           <div className="flex flex-col gap-md">
-            <ToggleRow
-              title="Low Stock Alerts"
-              description="Automatically notify suppliers when inventory falls below threshold."
-              checked={form.lowStockAlerts}
-              onChange={(v) => setForm({ ...form, lowStockAlerts: v })}
+            <StatusRow
+              title="Low Stock Detection"
+              description="Products are automatically flagged Low Stock or Critical Low on the Inventory page once quantity drops below Min Level — always on, no setup needed."
             />
-            <ToggleRow
-              title="Automated Backups"
-              description="Perform daily secure backups of all prescription records to secure vault."
-              checked={form.automatedBackups}
-              onChange={(v) => setForm({ ...form, automatedBackups: v })}
+            <StatusRow
+              title="Database Backups"
+              description="Handled at the infrastructure level by your Postgres host, not by this app. If you're on Neon, point-in-time recovery is included automatically — check your plan's retention window."
             />
           </div>
         </section>
@@ -150,22 +146,17 @@ function Field({ label, value, onChange, mono = false }) {
   );
 }
 
-function ToggleRow({ title, description, checked, onChange }) {
+function StatusRow({ title, description }) {
   return (
-    <div className="flex items-center justify-between border-b border-surface-container pb-md last:border-0 last:pb-0">
+    <div className="flex items-start justify-between gap-md border-b border-surface-container pb-md last:border-0 last:pb-0">
       <div>
         <h4 className="font-body-md text-body-md font-semibold text-on-surface">{title}</h4>
         <p className="font-body-sm text-body-sm text-on-surface-variant">{description}</p>
       </div>
-      <label className="relative inline-flex items-center cursor-pointer">
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={(e) => onChange(e.target.checked)}
-          className="sr-only peer"
-        />
-        <div className="w-11 h-6 bg-surface-variant rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-      </label>
+      <span className="shrink-0 inline-flex items-center gap-xs font-label-caps text-label-caps uppercase text-tertiary bg-tertiary-container/10 border border-tertiary-container/20 px-sm py-xs rounded-full">
+        <span className="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span>
+        Active
+      </span>
     </div>
   );
 }

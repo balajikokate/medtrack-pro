@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Spinner from '../components/Spinner';
 
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
+
 export default function Login() {
-  const [email, setEmail] = useState('admin@medtrack.pro');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState(DEMO_MODE ? 'admin@medtrack.pro' : '');
+  const [password, setPassword] = useState(DEMO_MODE ? 'password123' : '');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -78,10 +80,12 @@ export default function Login() {
           </button>
         </form>
 
-        <p className="text-center font-body-sm text-body-sm text-on-surface-variant mt-lg">
-          Demo credentials pre-filled — run <code className="font-data-mono text-data-mono">npm run seed</code> in
-          the backend first.
-        </p>
+        {DEMO_MODE && (
+          <p className="text-center font-body-sm text-body-sm text-on-surface-variant mt-lg">
+            Demo credentials pre-filled — run <code className="font-data-mono text-data-mono">npm run seed</code> in
+            the backend first.
+          </p>
+        )}
       </div>
     </div>
   );
