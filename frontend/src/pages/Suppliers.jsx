@@ -16,6 +16,7 @@ import {
 import { listProducts } from '../api/products';
 import { formatCurrency } from '../utils/currency';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 
 const EMPTY_FORM = {
   vendorId: '',
@@ -34,6 +35,8 @@ const EMPTY_REASSIGN_FORM = { poId: '', newSupplierId: '' };
 
 export default function Suppliers() {
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const canManage = user?.role === 'admin' || user?.role === 'pharmacist';
   const [suppliers, setSuppliers] = useState([]);
   const [products, setProducts] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
@@ -245,13 +248,15 @@ export default function Suppliers() {
             Manage vendors, lead times, and active purchase orders.
           </p>
         </div>
-        <button
-          onClick={openAddModal}
-          className="bg-primary text-on-primary font-body-md text-body-md py-sm px-lg rounded flex items-center justify-center gap-sm hover:bg-surface-tint transition-colors w-full sm:w-auto"
-        >
-          <span className="material-symbols-outlined">add_circle</span>
-          Add Supplier
-        </button>
+        {canManage && (
+          <button
+            onClick={openAddModal}
+            className="bg-primary text-on-primary font-body-md text-body-md py-sm px-lg rounded flex items-center justify-center gap-sm hover:bg-surface-tint transition-colors w-full sm:w-auto"
+          >
+            <span className="material-symbols-outlined">add_circle</span>
+            Add Supplier
+          </button>
+        )}
       </div>
 
       {error && (
@@ -316,13 +321,15 @@ export default function Suppliers() {
                       ID: <span className="font-data-mono text-data-mono">{detail.vendorId}</span>
                     </p>
                   </div>
-                  <button
-                    onClick={() => openEditModal(detail)}
-                    className="flex items-center gap-xs text-primary font-body-sm text-body-sm py-xs px-sm rounded hover:bg-primary-fixed/30 transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">edit</span>
-                    Edit
-                  </button>
+                  {canManage && (
+                    <button
+                      onClick={() => openEditModal(detail)}
+                      className="flex items-center gap-xs text-primary font-body-sm text-body-sm py-xs px-sm rounded hover:bg-primary-fixed/30 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">edit</span>
+                      Edit
+                    </button>
+                  )}
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
                   <div className="flex items-start gap-sm">
@@ -349,17 +356,19 @@ export default function Suppliers() {
               <div className="bg-surface border border-outline-variant rounded-lg overflow-hidden">
                 <div className="p-md border-b border-outline-variant bg-surface-container-low flex justify-between items-center">
                   <h3 className="font-headline-sm text-headline-sm text-on-surface">Recent Purchase Orders</h3>
-                  <button
-                    onClick={() => {
-                      setPoForm({ ...EMPTY_PO_FORM, supplierId: detail.id });
-                      setPoError('');
-                      setPoModalOpen(true);
-                    }}
-                    className="flex items-center gap-xs text-primary font-body-sm text-body-sm py-xs px-sm rounded hover:bg-primary-fixed/30 transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">add</span>
-                    Create Purchase Order
-                  </button>
+                  {canManage && (
+                    <button
+                      onClick={() => {
+                        setPoForm({ ...EMPTY_PO_FORM, supplierId: detail.id });
+                        setPoError('');
+                        setPoModalOpen(true);
+                      }}
+                      className="flex items-center gap-xs text-primary font-body-sm text-body-sm py-xs px-sm rounded hover:bg-primary-fixed/30 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">add</span>
+                      Create Purchase Order
+                    </button>
+                  )}
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
@@ -412,7 +421,7 @@ export default function Suppliers() {
                               </td>
                               <td className="p-sm text-on-surface-variant">{o.reminderCount || 0} sent</td>
                               <td className="p-sm">
-                                {o.status === 'Approved' && (
+                                {canManage && o.status === 'Approved' && (
                                   <button
                                     onClick={() => handleReceiveDelivery(o.id)}
                                     disabled={deliveringId === o.id}
@@ -426,7 +435,7 @@ export default function Suppliers() {
                                     {deliveringId === o.id ? 'Receiving...' : 'Mark as Delivered'}
                                   </button>
                                 )}
-                                {o.reassignmentAvailable && (
+                                {canManage && o.reassignmentAvailable && (
                                   <button
                                     onClick={() => openReassignModal(o.id)}
                                     className="flex items-center gap-xs text-error font-body-sm text-body-sm py-xs px-sm rounded hover:bg-error-container/30 transition-colors whitespace-nowrap"

@@ -12,9 +12,14 @@ function sanitize(user) {
   return { id: user.id, name: user.name, email: user.email, role: user.role };
 }
 
+const VALID_ROLES = ['admin', 'pharmacist', 'technician'];
+
 async function register(req, res, next) {
   try {
     const { name, email, password, role } = req.body;
+    if (role && !VALID_ROLES.includes(role)) {
+      return res.status(400).json({ message: `Role must be one of: ${VALID_ROLES.join(', ')}` });
+    }
     const exists = await prisma.user.findUnique({ where: { email } });
     if (exists) return res.status(400).json({ message: 'Email already registered' });
 

@@ -5,6 +5,7 @@ import Modal from '../components/Modal';
 import Spinner from '../components/Spinner';
 import { listPrescriptions, verifyPrescription, createPrescription } from '../api/prescriptions';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 
 const EMPTY_FORM = {
   type: 'digital',
@@ -17,6 +18,8 @@ const EMPTY_FORM = {
 
 export default function Prescriptions() {
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const canVerify = user?.role === 'admin' || user?.role === 'pharmacist';
   const [prescriptions, setPrescriptions] = useState([]);
   const [counts, setCounts] = useState({ all: 0, pending: 0, verified: 0, expired: 0 });
   const [search, setSearch] = useState('');
@@ -182,7 +185,7 @@ export default function Prescriptions() {
                   <StatusBadge status={rx.status} />
                 </td>
                 <td className="px-md py-md text-right">
-                  {rx.status === 'Pending' ? (
+                  {rx.status === 'Pending' && canVerify ? (
                     <button
                       onClick={() => handleVerify(rx.id)}
                       disabled={verifyingId === rx.id}

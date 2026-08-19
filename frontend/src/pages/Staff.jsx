@@ -4,6 +4,7 @@ import Modal from '../components/Modal';
 import Spinner from '../components/Spinner';
 import { listStaff, createStaff, updateStaff, getStaffStats } from '../api/staff';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 
 const ROLES = ['Lead Pharmacist', 'Staff Pharmacist', 'Pharmacy Tech', 'Intern'];
 const EMPTY_FORM = { name: '', role: ROLES[2], licenseId: '', email: '', phone: '', onDuty: true };
@@ -21,6 +22,9 @@ function initials(name) {
 
 export default function Staff() {
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const canManage = user?.role === 'admin' || user?.role === 'pharmacist';
+  const canAdd = user?.role === 'admin';
   const [staff, setStaff] = useState([]);
   const [stats, setStats] = useState(null);
   const [roleFilter, setRoleFilter] = useState('');
@@ -118,13 +122,15 @@ export default function Staff() {
             Manage pharmacy personnel, roles, and current duty status.
           </p>
         </div>
-        <button
-          onClick={openAddModal}
-          className="bg-primary text-on-primary font-body-md text-body-md rounded py-sm px-md flex items-center justify-center gap-sm whitespace-nowrap"
-        >
-          <span className="material-symbols-outlined">person_add</span>
-          Add Staff Member
-        </button>
+        {canAdd && (
+          <button
+            onClick={openAddModal}
+            className="bg-primary text-on-primary font-body-md text-body-md rounded py-sm px-md flex items-center justify-center gap-sm whitespace-nowrap"
+          >
+            <span className="material-symbols-outlined">person_add</span>
+            Add Staff Member
+          </button>
+        )}
       </div>
 
       {error && (
@@ -223,7 +229,7 @@ export default function Staff() {
                   <td className="py-md px-md">
                     <button
                       onClick={() => toggleDuty(s)}
-                      disabled={togglingId === s.id}
+                      disabled={togglingId === s.id || !canManage}
                       className={`inline-flex items-center gap-xs px-sm py-xs rounded-full font-label-caps text-label-caps uppercase border transition-colors disabled:opacity-50 ${
                         s.onDuty
                           ? 'bg-tertiary-container/10 text-tertiary border-tertiary-container/20'
@@ -239,13 +245,15 @@ export default function Staff() {
                     </button>
                   </td>
                   <td className="py-md px-md">
-                    <button
-                      onClick={() => openEditModal(s)}
-                      className="flex items-center gap-xs text-primary font-body-sm text-body-sm py-xs px-sm rounded hover:bg-primary-fixed/30 transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">edit</span>
-                      Edit
-                    </button>
+                    {canManage && (
+                      <button
+                        onClick={() => openEditModal(s)}
+                        className="flex items-center gap-xs text-primary font-body-sm text-body-sm py-xs px-sm rounded hover:bg-primary-fixed/30 transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">edit</span>
+                        Edit
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -275,7 +283,7 @@ export default function Staff() {
                 </div>
                 <button
                   onClick={() => toggleDuty(s)}
-                  disabled={togglingId === s.id}
+                  disabled={togglingId === s.id || !canManage}
                   className={`inline-flex items-center gap-xs px-sm py-xs rounded-full font-label-caps text-label-caps uppercase border disabled:opacity-50 ${
                     s.onDuty
                       ? 'bg-tertiary-container/10 text-tertiary border-tertiary-container/20'
@@ -296,13 +304,15 @@ export default function Staff() {
                   <p className="font-data-mono text-data-mono text-on-background">{s.phone}</p>
                 </div>
               </div>
-              <button
-                onClick={() => openEditModal(s)}
-                className="flex items-center gap-xs text-primary font-body-sm text-body-sm py-xs px-sm rounded hover:bg-primary-fixed/30 transition-colors"
-              >
-                <span className="material-symbols-outlined text-[18px]">edit</span>
-                Edit
-              </button>
+              {canManage && (
+                <button
+                  onClick={() => openEditModal(s)}
+                  className="flex items-center gap-xs text-primary font-body-sm text-body-sm py-xs px-sm rounded hover:bg-primary-fixed/30 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[18px]">edit</span>
+                  Edit
+                </button>
+              )}
             </div>
           ))}
         </div>

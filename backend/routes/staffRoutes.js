@@ -6,13 +6,14 @@ const {
   deleteStaff,
   getStats,
 } = require('../controllers/staffController');
-const { protect } = require('../middleware/auth');
+const { protect, authorize } = require('../middleware/auth');
 
 const router = express.Router();
 
 router.use(protect);
 router.get('/stats', getStats);
-router.route('/').get(getStaff).post(createStaff);
-router.route('/:id').put(updateStaff).delete(deleteStaff);
+router.get('/', getStaff);
+router.post('/', authorize('admin'), createStaff);
+router.route('/:id').put(authorize('admin', 'pharmacist'), updateStaff).delete(authorize('admin'), deleteStaff);
 
 module.exports = router;

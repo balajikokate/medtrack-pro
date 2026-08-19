@@ -6,6 +6,7 @@ import Spinner from '../components/Spinner';
 import { listProducts, createProduct, updateProduct, deleteProduct, getProductBatches } from '../api/products';
 import { listSuppliers } from '../api/suppliers';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 
 const EMPTY_FORM = {
   name: '',
@@ -23,6 +24,9 @@ const EMPTY_FORM = {
 
 export default function Inventory() {
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const canManage = user?.role === 'admin' || user?.role === 'pharmacist';
+  const canDelete = user?.role === 'admin';
   const [products, setProducts] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -173,13 +177,15 @@ export default function Inventory() {
             <option value="critical_low">Critical Low</option>
             <option value="expired">Expired</option>
           </select>
-          <button
-            onClick={openCreate}
-            className="bg-primary text-on-primary font-body-sm text-body-sm rounded-lg py-2 px-4 hover:bg-primary-container transition-colors flex items-center gap-xs"
-          >
-            <span className="material-symbols-outlined text-[18px]">add</span>
-            Add Product
-          </button>
+          {canManage && (
+            <button
+              onClick={openCreate}
+              className="bg-primary text-on-primary font-body-sm text-body-sm rounded-lg py-2 px-4 hover:bg-primary-container transition-colors flex items-center gap-xs"
+            >
+              <span className="material-symbols-outlined text-[18px]">add</span>
+              Add Product
+            </button>
+          )}
         </div>
       </div>
 
@@ -254,19 +260,23 @@ export default function Inventory() {
                     <StatusBadge status={p.status} />
                   </td>
                   <td className="px-md py-4 whitespace-nowrap text-right">
-                    <button
-                      onClick={() => openEdit(p)}
-                      className="text-secondary hover:text-primary transition-colors p-1 rounded hover:bg-surface-container-highest"
-                    >
-                      <span className="material-symbols-outlined text-[20px]">edit</span>
-                    </button>
-                    <button
-                      onClick={() => handleDelete(p.id)}
-                      disabled={deletingId === p.id}
-                      className="text-secondary hover:text-error transition-colors p-1 rounded hover:bg-error-container disabled:opacity-50"
-                    >
-                      {deletingId === p.id ? <Spinner /> : <span className="material-symbols-outlined text-[20px]">delete</span>}
-                    </button>
+                    {canManage && (
+                      <button
+                        onClick={() => openEdit(p)}
+                        className="text-secondary hover:text-primary transition-colors p-1 rounded hover:bg-surface-container-highest"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">edit</span>
+                      </button>
+                    )}
+                    {canDelete && (
+                      <button
+                        onClick={() => handleDelete(p.id)}
+                        disabled={deletingId === p.id}
+                        className="text-secondary hover:text-error transition-colors p-1 rounded hover:bg-error-container disabled:opacity-50"
+                      >
+                        {deletingId === p.id ? <Spinner /> : <span className="material-symbols-outlined text-[20px]">delete</span>}
+                      </button>
+                    )}
                   </td>
                 </tr>
                 {expandedProductId === p.id && (

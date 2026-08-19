@@ -2,10 +2,13 @@ import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import { getSettings, updateSettings } from '../api/settings';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 import Spinner from '../components/Spinner';
 
 export default function Settings() {
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -91,15 +94,22 @@ export default function Settings() {
               </p>
             </div>
           </div>
-          <div className="mt-lg flex justify-end">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="bg-primary text-on-primary font-body-md py-sm px-md rounded hover:bg-primary-container transition-colors disabled:opacity-60 flex items-center gap-sm"
-            >
-              {saving && <Spinner />}
-              {saving ? 'Saving...' : 'Save Changes'}
-            </button>
+          <div className="mt-lg flex justify-end items-center gap-md">
+            {!isAdmin && (
+              <p className="font-body-sm text-body-sm text-on-surface-variant">
+                Only an admin can change facility settings.
+              </p>
+            )}
+            {isAdmin && (
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="bg-primary text-on-primary font-body-md py-sm px-md rounded hover:bg-primary-container transition-colors disabled:opacity-60 flex items-center gap-sm"
+              >
+                {saving && <Spinner />}
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            )}
           </div>
         </section>
 
