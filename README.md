@@ -86,6 +86,19 @@ frontend/
   tailwind.config.js       Exact color/spacing/typography tokens from the Stitch DESIGN.md
 ```
 
+## Running tests
+
+```bash
+cd backend
+npm test
+```
+
+Covers auth (registration lockdown, login, change-password) and role-based access control across
+every module (settings, staff, products, suppliers, prescriptions). Tests run against your real
+`DATABASE_URL`, but entirely inside an isolated `test` Postgres schema — created fresh and dropped
+at the end of every run, never touching `public` where your real/demo data lives. No separate test
+database needs setting up.
+
 ## Deploying for a real customer
 
 1. Run `npx prisma migrate deploy` against the customer's database (empty tables, no demo data).
